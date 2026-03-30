@@ -1,0 +1,64 @@
+---
+title: "Linear Regression Models, Segment 4, Topic 1: In-Sample Estimation of Prediction Error"
+editor_options:
+  chunk_output_type: console
+output: html_notebook
+---
+
+```{r}
+library(ggplot2)
+library(dplyr)
+```
+
+```{r}
+# Population model
+nsamples = 1000
+x_1 = rnorm(nsamples, mean = 0, sd = 1)
+x_2 = rnorm(nsamples, mean = 0, sd = 1)
+epsilon = rnorm(nsamples, mean = 0, sd = 5)
+y = 1+2*x_1+9*x_2+epsilon
+popData = data.frame(x_1, x_2, y)
+colnames(popData) = c('X_1', 'X_2', 'Y')
+```
+
+```{r}
+# Split data into train (75%), validation (15%), and test (10%) sets
+set.seed(0)
+split = c(train = 0.75, validation = 0.15, test = 0.1)
+ind = sample(cut(seq(nsamples), nsamples*cumsum(c(0, split)), labels = names(split)))
+
+popDataTrain = popData[ind == 'train', ]
+popDataValidation = popData[ind == 'validation', ]
+popDataTest = popData[ind == 'test', ]
+```
+
+```{r}
+# Build using training data the model Y ~ X_1
+model = lm(data = popDataTrain, Y ~ X_1)
+
+# Build using training data the model Y ~ X_2
+#model = lm(data = popDataTrain, Y ~ X_2)
+
+# Build using training data the model Y ~ X_1 + X_2
+#model = lm(data = popDataTrain, Y ~ X_1 + X_2)
+
+# Build using training data the model Y ~ X_1 + X_2 + I(X_1^2) + I(X_2^2)
+#model = lm(data = popDataTrain, Y ~ X_1 + X_2 + I(X_1^2) + I(X_2^2))
+
+# Build using training data the model Y ~ X_1 + X_2 + I(X_1^2) + I(X_2^2) + I(X_1^3) + I(X_2^3)
+#model = lm(data = popDataTrain, Y ~ X_1 + X_2 + I(X_1^2) + I(X_2^2) + I(X_1^3) + I(X_2^3))
+
+# Build using training data the model Y ~ X_1 + X_2 + X_1:X_2
+#model = lm(data = popDataTrain, Y ~ X_1 + X_2 + X_1:X_2)
+
+# Calculate RMSE (root-mean-squared-error) on train data
+train_error = sqrt(mean((popDataTrain$Y - predict(model, popDataTrain))^2))
+
+# Calculate RMSE (root-mean-squared-error) on validation data
+validation_error = sqrt(mean((popDataValidation$Y - predict(model, popDataValidation))^2))
+
+# Calculate RMSE (root-mean-squared-error) on test data
+test_error = sqrt(mean((popDataTest$Y - predict(model, popDataTest))^2))
+
+cat(sprintf('Train error = %f, Validation error = %f, Test error = %f\n', train_error, validation_error, test_error))
+```

@@ -1,0 +1,114 @@
+---
+title: "Control Flow in R"
+output: html_notebook
+editor_options: 
+  chunk_output_type: inline
+---
+
+
+```{r}
+# Logical expressions-1: relational operators
+x = 5
+x == 5
+```
+
+```{r}
+# Logical expressions-2: logical operators
+l1 = c(TRUE, FALSE, FALSE, TRUE)
+l2 = c(TRUE, TRUE, FALSE, FALSE)
+#short form of logical and
+l1 &  l2
+#short form of logical or
+l1 | l2
+#logical not
+!(l1)
+#logical xor (long form)
+l1 && l2
+```
+
+```{r}
+# Logical expressions-3: value matching
+names = c('Ajith', 'Priya', 'Gabriel')
+'Ajith' %in% names
+!'Ajith' %in% names
+```
+
+```{r}
+# Special functions all() and any(), isTRUE(), isFALSE(), all.equal()
+all(l1)
+any(l1)
+x = c(1, 2, NA)
+all( x > 0)
+isTRUE(all(x>0))
+x = 1:4
+y = (x^(1/3))^3
+print(x)
+print(y)
+x == y
+all.equal(x,y)
+```
+
+
+```{r}
+# If-statement
+x = -4
+#x %% 2
+#if(x %% 2== 0){
+#  print('even')
+#}else{
+ #   print('odd')
+#}
+
+if(x < 0){
+  print('negetive')
+  }else if (x > 0) {
+  print('positive')
+  }else {
+      print('zero')}
+
+```
+
+
+```{r}
+# Vectorized if-statement
+x = c(1:10)
+ifelse(x %% 2 == 0, 'even', 'odd')
+
+```
+
+```{r}
+# For-statement
+x = c (1:10)
+for (val in  x){
+  y =val^2
+  print(y)
+}
+
+for (i in 1:length(x)){
+  y[i] =x[i]^2
+  print(y[i])
+}
+participents = c('Ajith', 'Priya', 'Gabriel')
+for (names in participents ){
+  print(names)
+}
+
+for (val in  x){
+  print(x)
+}
+
+for (val in  x){
+  print(val)
+
+}
+```
+
+```{r}
+# While-statement
+#runif(1)
+x = 1
+while(x > 0.3){
+  x = runif(1)
+  print(x)
+}
+```

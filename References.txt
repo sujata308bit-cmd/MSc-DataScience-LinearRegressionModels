@@ -1,0 +1,2 @@
+(1) R for Data Science (2e) by Hadley Wickham: https://r4ds.hadley.nz/
+(2) An Introduction to Statistical Learning by Gareth James et al.: https://www.statlearning.com/

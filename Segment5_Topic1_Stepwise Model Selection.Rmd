@@ -1,0 +1,103 @@
+---
+title: "Linear Regression Models, Segment 5, Topic 1: Stepwise Model Selection
+editor_options:
+  chunk_output_type: console
+output: html_notebook
+---
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(mplot)
+library(reshape)
+library(leaps)
+```
+
+```{r}
+# Load bodyfat data
+data('bodyfat', package = 'mplot')
+bfData = bodyfat %>% select(-c('Id')) # removed Id column
+str(bfData)
+```
+
+```{r}
+# Features in the bodyfat data
+colnames(bfData)
+```
+
+```{r}
+# Boxplot excluding the ID column
+ggplot(data = melt(bfData), aes(x = factor(variable), y = value)) +
+  geom_boxplot() +
+  facet_wrap(~variable, scale = 'free') 
+```
+
+```{r}
+# Build a linear regression model for bodyfat as a function of abdominal circumference
+model = lm(data = bfData, Bodyfat ~ Abdo)
+summary(model)
+```
+
+```{r}
+# Build a linear regression model for bodyfat as a function of all features
+model = lm(data = bfData, Bodyfat ~ .)
+summary(model)
+```
+
+```{r}
+# Subset-based model selection using adjusted R2 statistic (leaps package)
+x = as.matrix(bfData %>% select(-c('Bodyfat'))) # matrix of covariates
+y = as.matrix(bfData %>% select(c('Bodyfat'))) # vector of response values
+model.leaps = leaps(x, y, names = names(bfData %>% select(-c('Bodyfat'))), method = 'adjr2')
+model.leaps$which
+model.leaps$adjr2
+```
+
+```{r}
+# Forward stepwise selection using BIC 
+# Intercept-only model
+model.lower = lm(data = bfData, Bodyfat ~ 1)
+# Full model
+model.upper = lm(data = bfData, Bodyfat ~ .)
+model.step = step(model.lower, scope = list(lower = model.lower, upper = model.upper), direction = 'forward', k = log(128))
+# k is the multiple of the number of degrees of freedom used for the penalty term which is log(n) for BIC and 2 for AIC
+summary(model.step)
+round(summary(model.step)$coef, 3)
+```
+
+```{r}
+# Forward stepwise selection using AIC 
+# Intercept-only model
+model.lower = lm(data = bfData, Bodyfat ~ 1)
+# Full model
+model.upper = lm(data = bfData, Bodyfat ~ .)
+model.step = step(model.lower, scope = list(lower = model.lower, upper = model.upper), direction = 'forward', k = 2)
+# k is the multiple of the number of degrees of freedom used for the penalty which is log(n) for BIC and 2 for AIC
+summary(model.step)
+round(summary(model.step)$coef, 3)
+```
+
+```{r}
+# Backward stepwise selection using BIC 
+# Intercept-only model
+model.lower = lm(data = bfData, Bodyfat ~ 1)
+# Full model
+model.upper = lm(data = bfData, Bodyfat ~ .)
+model.step = step(model.upper, scope = list(lower = model.lower, upper = model.upper), direction = 'backward', k = log(128))
+summary(model.step)
+round(summary(model.step)$coef, 3)
+```
+
+
+```{r}
+# Backward stepwise selection using AIC 
+# Intercept-only model
+model.lower = lm(data = bfData, Bodyfat ~ 1)
+# Full model
+model.upper = lm(data = bfData, Bodyfat ~ .)
+model.step = step(model.upper, scope = list(lower = model.lower, upper = model.upper), direction = 'backward', k = 2)
+summary(model.step)
+round(summary(model.step)$coef, 3)
+```
+
+

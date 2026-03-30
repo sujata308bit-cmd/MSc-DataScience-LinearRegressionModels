@@ -1,0 +1,91 @@
+---
+title: "Webinar 1 Sunday, April 20, 2025"
+editor_options:
+  chunk_output_type: console
+output: html_notebook
+---
+
+```{r}
+library(ggplot2)
+library(dplyr)
+```
+
+```{r}
+# Load the house price dataset
+hData = read.csv('/Users/s0k04ng/Downloads/houseprices.csv', header = TRUE, stringsAsFactors = FALSE, na.strings = c("", "NA", "Not Available", "not available", "n/a"))
+str(hData)
+```
+
+```{r}
+# Convert 'locality', 'facing' and 'parking' columns to factors
+categorical_cols = c('locality', 'facing', 'parking')
+hData[categorical_cols] = lapply(hData[categorical_cols], as.factor)
+str(hData)
+```
+
+
+```{r}
+# Continuous columns
+continuous_cols = setdiff(colnames(hData), categorical_cols)
+```
+
+```{r}
+# Set ggplot theme for plotting
+My_Theme = theme(axis.text.x = element_text(size = 9),
+   axis.text.y = element_text(size = 9),
+   axis.title.x = element_text(size = 11),
+   axis.title.y = element_text(size = 11),
+   plot.title = element_text(size = 12, hjust = 0.5, face = "bold"))
+```   
+   
+
+```{r}
+# Plot percentage of NAs in each column of the data frame
+hData_NA = setNames(stack(sapply(hData, function(x){(sum(is.na(x))/length(x))*100}))[2:1], c('Feature','Value'))
+p = ggplot(data = hData_NA, aes(x = Feature, y = Value)) +
+  geom_bar(stat = 'identity', fill = 'steelblue', width = 0.3) +
+  theme(text = element_text(size = 14, face = 'bold'),
+  axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
+  xlab('') + ylab('Percentage') +
+  ggtitle('Percentage of NAs across all features') +
+  My_Theme
+p
+```
+
+```{r}
+# Add NA as a factor level for categorical columns 
+hData[categorical_cols] = lapply(hData[categorical_cols], addNA)
+str(hData)
+```
+
+```{r}
+# Make a histogram of rent values
+p = ggplot(data = hData) +
+  geom_histogram(aes(x = rent, y = after_stat(count)), breaks = seq(mean(hData$rent)-4*sd(hData$rent), mean(hData$rent)+4*sd(hData$rent), by = 25000), color = 'black', fill = 'blue') +
+  labs(x = 'Rent', y = 'Frequency') +
+  ggtitle('Histogram of house rents') +
+  My_Theme
+p
+```
+
+
+```{r}
+# Make a scatter plot between price per square feet and rent
+p = ggplot(data = hData) +
+  geom_point(aes(x = rent , y = price_per_sqft)) +
+  labs(x = 'Rent (Rupees)', y = 'Price per square feet (Rupees)') +
+  ggtitle('Price per sqft vs. rent') +
+  My_Theme
+p
+```
+
+```{r}
+# Build a linear model to predict price per square feet as a function of rent. How accurate is the model?
+model1 = lm(data = hData, price_per_sqft ~ rent)
+summary(model1)
+```
+
+```{r}
+
+```
+

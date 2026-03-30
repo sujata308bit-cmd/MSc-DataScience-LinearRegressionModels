@@ -1,0 +1,91 @@
+---
+title: "Webinar 3, Sunday, May 25, 2025"
+editor_options:
+  chunk_output_type: inline
+output: html_notebook
+---
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(HSAUR)
+library(ggcorrplot)
+library(reshape2)
+library(car)
+```
+
+```{r}
+# Set ggplot theme for plotting
+My_Theme = theme(axis.text.x = element_text(size = 9),
+   axis.text.y = element_text(size = 9),
+   axis.title.x = element_text(size = 11),
+   axis.title.y = element_text(size = 11),
+   plot.title = element_text(size = 12, hjust = 0.5, face = "bold"))
+```
+
+```{r}
+# Load the heptathlon dataset
+data("heptathlon")
+str(heptathlon)
+```
+
+```{r}
+# Introduce a new column called sprint highlighting fast and slow sprinters
+heptathlon = heptathlon %>% mutate(sprint = ifelse(run200m <= quantile(heptathlon$run200m, 0.25) & run800m <= quantile(heptathlon$run800m, 0.25), 'fast', 'slow'))
+```
+
+```{r}
+# Change sprint column to factor type
+heptathlon['sprint'] = lapply(heptathlon['sprint'], factor)
+str(heptathlon)
+```
+
+```{r}
+# How many levels does the categorical variable *sprint* have? What is the reference level? 
+levels(heptathlon$sprint)
+contrasts(heptathlon$sprint)
+```
+
+```{r}
+# Create variables for categorical and continuous columns
+categorical_cols = c('sprint')
+continuous_cols = setdiff(colnames(heptathlon), categorical_cols)
+```
+
+```{r}
+# Make a scatter plot between *run200m* (x-axis) and *longjump* (y-axis). What do you observe from this plot?
+p1 = ggplot(data = heptathlon) +
+geom_point(aes(x = run200m, y = longjump)) +
+labs(x = '200m Run Time (seconds)', y = 'Longjump Distance (metres)')+
+My_Theme
+p1
+```
+
+```{r}
+# Correlation between all pairs of continuous predictors (leave out sprint and the response variable score). What do you observe?
+cormet = cor(heptathlon %>% select(-c(score, sprint)))
+```
+
+```{r}
+# Make a scatter plot between *run200m* (x-axis) and *longjump* (y-axis) now with the data points color-coded using *sprint*. What do you observe from this plot?
+p2 = ggplot(data = heptathlon) +
+geom_point(aes(x = run200m, y = longjump, color = sprint)) +
+labs(x = '200m Run Time (seconds)', y = 'Longjump Distance (metres)')+
+My_Theme
+p2
+```
+
+```{r}
+# Calculate Pearson's correlation between *run200m* and *longjump*. What do you observe?
+cor(heptathlon$run200m, heptathlon$longjump)
+```
+
+```{r}
+# Fit a linear model for approximating *score* as a function of *sprint*. Print the model's summary. How accurate is the model? How do the slow athletes' scores compare to the fast ones?
+model = lm(data = heptathlon, score ~ sprint)
+summary(model)
+mean_slow = mean(heptathlon[heptathlon$sprint == 'slow', 'score'])
+mean_fast = mean(heptathlon[heptathlon$sprint == 'fast', 'score'])
+mean_slow
+mean_slow
+```

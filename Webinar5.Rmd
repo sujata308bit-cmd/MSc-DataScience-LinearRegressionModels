@@ -1,0 +1,292 @@
+---
+title: "Webinar 5"
+editor_options:
+  chunk_output_type: inline
+output: html_notebook
+---
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(HSAUR)
+library(ggcorrplot)
+library(reshape2)
+library(car)
+```
+
+```{r}
+# Set ggplot theme for plotting
+My_Theme = theme(axis.text.x = element_text(size = 9),
+   axis.text.y = element_text(size = 9),
+   axis.title.x = element_text(size = 11),
+   axis.title.y = element_text(size = 11),
+   plot.title = element_text(size = 12, hjust = 0.5, face = "bold"))
+```
+
+```{r}
+# Load the heptathlon dataset
+data("heptathlon")
+str(heptathlon)
+```
+
+```{r}
+# Introduce a new column called sprint highlighting fast and slow sprinters
+heptathlon = heptathlon %>% mutate(sprint = ifelse(run200m <= quantile(heptathlon$run200m, 0.25) & run800m <= quantile(heptathlon$run800m, 0.25), 'fast', 'slow'))
+head(heptathlon, 5)
+```
+
+```{r}
+# Change sprint column to factor type
+heptathlon['sprint'] = lapply(heptathlon['sprint'], factor)
+str(heptathlon)
+```
+
+```{r}
+# Create variables for categorical and continuous columns
+categorical_cols = c('sprint')
+continuous_cols = setdiff(colnames(heptathlon), categorical_cols)
+```
+
+```{r}
+# Fit a linear model for approximating *score* as a function of *shot* and *sprint*. Print the model's summary and answer the following questions:
+
+# 1. Did the addition of the new predictor *shot* improve the model accuracy? 
+# 2. *True/false* (explain in one line): the model suggests that there is a possible linear relationship between an athlete's score and shotput performance.
+# 3. For a 1 metre increase in shot put throw and with the same sprint performance, we can say with 95% confidence that the athlete's score will increase/decrease by an amount in the interval [?, ?].
+model = lm(data = heptathlon, score ~ shot + sprint)
+summary(model)
+```
+
+```{r}
+#  Using the model built above, extract the slope and intercept for estimating the *score* of *slow* and *fast* athletes. 
+# Slow athletes
+coef(model)
+intercept_slow = coef(model)[1] + coef(model)[3]
+intercept_slow
+intercept_fast = coef(model)[1]
+intercept_fast
+slope_slow = coef(model)[2]
+slope_slow
+slope_fast = coef(model)[2]
+slope_fast
+```
+
+```{r}
+# Fit a linear model for approximating *score* as a function of *shot*, *sprint*, and *javelin*. Print the model's summary.
+
+# 1. Did the addition of the new predictor *javelin* improve the model accuracy?
+# 2. *True/false* (explain in one line): the model suggests that there is a possible linear relationship between an athlete's score and javelin performance.
+# 3. For a 1 metre increase in shot put throw and with the same javelin and sprint performance, we can say with 95% confidence that the athlete's score will increase/decrease by an amount in the interval [?, ?].
+model = lm(data = heptathlon, score ~ shot + sprint + javelin)
+summary(model)
+```
+
+```{r}
+# Fit a linear model for approximating score as a function of highjump, and sprint. Print the model's summary and answer the following questions:
+
+# 1. How accurate is this model?
+# 2. Considering a p-value of 10% as cutoff, are there any insignificant features?
+# 3. extract the slope and intercept for estimating the *score* of *slow* and *fast* athletes.
+model = lm(data = heptathlon, score ~ highjump + sprint)
+summary(model)
+```
+
+
+```{r}
+# Fit a linear model for approximating *score* as a function of *shot*, *highjump*, and *sprint*. Print the model's summary and answer the following questions:
+
+# 1. How accurate is this model?
+# 2. Considering a p-value of 10% as cutoff, are there any insignificant features?
+model = lm(data = heptathlon, score ~ shot + highjump + sprint)
+summary(model)
+```
+
+# Fit a linear model for approximating *score* as a function of *hurdles*, *shot*, *highjump*, and *sprint*. Print the model's summary and answer the following questions:
+
+# 1. How accurate is this model?
+# 2. Considering a p-value of 10% as cutoff, are there any insignificant features?
+
+```{r}
+model = lm(data = heptathlon, score ~ hurdles + shot + highjump + sprint)
+summary(model)
+```
+
+```{r}
+# Predict the model out-of-sample performance by applying it to the test data.
+# Split the data into 80% train and 20% test parts
+set.seed(0)
+train_ind = sample(seq_len(nrow(heptathlon)), size = floor(0.8 * nrow(heptathlon)))
+
+trainData = heptathlon[train_ind, ]
+testData = heptathlon[-train_ind, ]
+
+# Build linear regression model
+model = lm(data = trainData, score ~ hurdles + shot + highjump + sprint)
+
+# Predict on the test data
+predict(model, testData)
+  
+# Print the true scores for the test data
+print(testData$score)
+  
+# Print the RMS error on the test data
+sqrt(mean((predict(model, testData) - testData$score)^2))
+  
+```
+
+```{r}
+# Load the house price dataset
+hData = read.csv('Data/houseprices.csv', header = TRUE, stringsAsFactors = FALSE, na.strings = c("", "NA", "Not Available", "not available", "n/a"))
+str(hData)
+```
+
+```{r}
+# Convert 'locality', 'facing' and 'parking' columns to factors
+categorical_cols = c('locality', 'facing', 'parking')
+hData[categorical_cols] = lapply(hData[categorical_cols], as.factor)
+str(hData)
+```
+
+```{r}
+# Continuous columns
+continuous_cols = setdiff(colnames(hData), categorical_cols)
+```
+
+```{r}
+# Add NA as a factor level for categorical columns 
+hData[categorical_cols] = lapply(hData[categorical_cols], addNA)
+str(hData)
+```
+
+```{r}
+# Build a linear model to predict sqrt of price per sqft as a function of logarea, logrent, and locality which we will evaluate using a train-test split of the dataset
+hData['sqrt_price_per_sqft'] = sqrt(hData$price_per_sqft)
+hData['logarea'] = log(hData$area)
+hData['logrent'] = log(hData$rent)
+model = lm(data = hData, sqrt_price_per_sqft ~ logarea+logrent+locality)
+summary(model)
+```
+
+```{r}
+set.seed(0)
+train_ind = sample(seq_len(nrow(hData)), size = floor(0.8 * nrow(hData)))
+
+trainData = hData[train_ind, ]
+testData = hData[-train_ind, ]
+
+# Build linear regression model
+model = lm(data = trainData, sqrt_price_per_sqft ~ logarea+logrent+locality)
+
+# Predict on the test data
+predict(model, testData)^2
+  
+# Print the true scores for the test data
+print(testData$price_per_sqft)
+  
+# Print the RMS error on the test data
+sqrt(mean((predict(model, testData)^2 - testData$price_per_sqft)^2))
+```
+
+
+```{r}
+# Simulate age of 100 senior adults in years
+n = 100
+age_years = round(rnorm(n, mean = 50, sd = 10), 0)
+print(age_years)
+```
+
+```{r}
+# Create a copy of the age variable to reflect age in months
+age_months =12*age_years
+print(age_months)
+```
+
+```{r}
+# Create another copy that adds a bit of noise to the age (in years) variable
+age_noisy = age_years + rnorm(n, mean = 0, sd = 4)
+print(age_noisy)
+```
+
+```{r}
+# Simulate a population model for height as a function of age (in years)
+height = 20 + 3*age_years + rnorm(n, mean = 0, sd = 10)
+print(height)
+```
+
+```{r}
+# Create a dataframe with all the predictors (age in years, age in months, noisy age in years) and the response (height in cm)
+hData = data.frame(age_years, age_months, age_noisy, height)
+head(hData)
+```
+
+```{r}
+# A quick way to visualize the relationship between the response and individual predictors
+
+```
+
+```{r}
+# Calculate correlation matrix for all predictors
+cormat = 
+print(cormat)
+```
+
+```{r}
+# Set lower-triangular part of correlation matrix to NA
+cormat[lower.tri(cormat)] = NA
+print(cormat)
+```
+
+```{r}
+# Melt the correlation matrix
+melt(cormat)
+```
+
+```{r}
+# Visualize the correlation matrix using ggplot
+p = ggplot(data = melt(cormat), aes(x = Var2, y = Var1, fill = value)) +
+  geom_tile(color = 'white') +
+  coord_fixed() +
+  scale_fill_gradient2(low = 'blue', high = 'red', mid = 'white', midpoint = 0, limit = c(-1, 1), space = 'Lab', name = 'Correlation')
+p
+```
+
+```{r}
+# Visualize the correlation matrix using ggcorrplot
+ggcorrplot(cormat)
+```
+
+```{r}
+# Build a linear regression model for height as a function of age (in years)
+hData_sample = hData[sample(n, 20), ]
+model_years = lm(data = hData_sample, height ~ age_years)
+summary(model_years)
+```
+
+```{r}
+# Build a linear regression model for height as a function of age (in months)
+model_months = 
+summary(model_months)
+```
+
+```{r}
+# Build a linear regression model for height as a function of age (in years, noisy version)
+model_noisy = 
+summary(model_noisy)
+```
+
+```{r}
+# Build a linear regression model for height as a function of age (in years) and age (in months)
+model = lm(data = hData_sample, height ~ age_years + age_months)
+summary(model) 
+```
+
+```{r}
+# Build a linear regression model for height as a function of age (in years) and age (in years, noisy version)
+model = 
+summary(model) 
+```
+
+```{r}
+## Assess multicollinearity using VIF
+
+```

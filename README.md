@@ -1,2 +1,2 @@
-# MSc-DataScience-LinearRegressionModels
-MSc-DataScience-LinearRegressionModels
+# DataScience
+MSc In Data Science

@@ -1,0 +1,137 @@
+---
+title: "Linear Regression Models, Segment 3, Topic 2: Nonlinearity of Data: Residual Plots, Heteroskedasticity: Non-constant Variance of Error & Weighted Least Squares"
+editor_options:
+  chunk_output_type: console
+output: html_notebook
+---
+
+```{r}
+library(ggplot2)
+library(dplyr)
+```
+
+```{r}
+# Load the mtcars dataset
+file = 'data/mtcars.csv'
+carData = read.csv(file, header = TRUE, row.names = 1, stringsAsFactors = FALSE)
+str(carData)
+```
+
+```{r}
+# Build a linear regression model for mpg as a function of hp and wt
+model = lm(data = carData, mpg ~ hp+wt)
+summary(model)
+```
+
+```{r}
+# Residual is uncorrelated with fitted values
+cor(residuals(model), predict(model))
+rData = data.frame(cbind(as.numeric(residuals(model)), as.numeric(predict(model))))
+colnames(rData) = c('residual', 'yhat')
+ggplot(data = rData, aes(x = yhat, y = residual)) +
+  geom_point(size = 1, color = 'blue') +
+  labs(x = 'Fitted Values', y = 'Residual') + 
+  ggtitle("Residual vs. Fitted Values for mpg~hp+wt") +
+  theme(axis.text = element_text(size = 8),
+   axis.text.x = element_text(size = 8),
+   axis.text.y = element_text(size = 8),
+   axis.title = element_text(size = 8, face = "bold"))
+```
+
+```{r}
+# Residual is positively correlated with true response values
+cor(residuals(model), carData$mpg)
+rData = data.frame(cbind(as.numeric(residuals(model)), carData$mpg))
+colnames(rData) = c('residual', 'y')
+ggplot(data = rData, aes(x = y, y = residual)) +
+  geom_point(size = 1, color = 'blue') +
+   labs(x = 'True Response Values', y = 'Residual') + 
+   ggtitle("Residual vs. True Response Values for mpg~hp+wt") +
+   theme(axis.text = element_text(size = 8),
+   axis.text.x = element_text(size = 8),
+   axis.text.y = element_text(size = 8),
+   axis.title = element_text(size = 8, face = "bold"))
+```
+
+
+```{r}
+# Build a linear regression model for mpg as a function of hp
+model = lm(data = carData, mpg ~ hp)
+summary(model)
+```
+
+
+```{r}
+# Residual plot
+rData = data.frame(cbind(as.numeric(residuals(model)), as.numeric(predict(model))))
+colnames(rData) = c('residual', 'yhat')
+ggplot(data = rData, aes(x = yhat, y = residual)) +
+  geom_point(size = 1, color = 'blue') +
+  geom_smooth(se=FALSE, method="lm", formula = y~x+I(x^2), color = 'red', size = 0.5, linetype = "dashed")+
+   labs(x = 'Fitted Values', y = 'Residual') + 
+   ggtitle("Residual vs. Fitted Vaues for mpg~hp") +
+   theme(axis.text = element_text(size = 8),
+   axis.text.x = element_text(size = 8),
+   axis.text.y = element_text(size = 8),
+   axis.title = element_text(size = 8, face = "bold"))
+```
+
+```{r}
+# Build a linear regression model for mpg as a function of hp and hp^2
+model = lm(data = carData, mpg ~ hp + I(hp^2))
+summary(model)
+```
+
+```{r}
+# Residual plot
+rData = data.frame(cbind(as.numeric(residuals(model)), as.numeric(predict(model))))
+colnames(rData) = c('residual', 'yhat')
+ggplot(data = rData, aes(x = yhat, y = residual)) +
+  geom_point(size = 1, color = 'blue') +
+  geom_smooth(se=FALSE, method="lm", formula = y~x+I(x^2), color = 'red', size = 0.5, linetype = "dashed")+
+   labs(x = 'Fitted Values', y = 'Residual') + 
+   ggtitle("Residual vs. Fitted Values for mpg~hp+I(hp^2)") +
+   theme(axis.text = element_text(size = 8),
+   axis.text.x = element_text(size = 8),
+   axis.text.y = element_text(size = 8),
+   axis.title = element_text(size = 8, face = "bold"))
+```
+
+```{r}
+# Generate heteroscedastic data
+nsamples = 1000
+X = rpois(nsamples, 20)
+sd_err = 2*X^2
+Y = 3*X + rnorm(nsamples, 0, sd_err)
+hetscData = data.frame(cbind(X, Y))
+colnames(hetscData) = c('X', 'Y')
+```
+
+```{r}
+# Build a linear regression model for Y as a function of X
+model = lm(data = hetscData, Y ~ X)
+summary(model)
+```
+
+```{r}
+# Residual plot
+rData = data.frame(cbind(as.numeric(residuals(model)), as.numeric(predict(model))))
+colnames(rData) = c('residual', 'yhat')
+ggplot(data = rData, aes(x = yhat, y = residual)) +
+  geom_point(size = 1, color = 'blue') +
+   labs(x = 'Fitted Values', y = 'Residual') + 
+   ggtitle("Residual vs. Fitted Data for Y = 3X + epsilon") +
+   theme(axis.text = element_text(size = 8),
+   axis.text.x = element_text(size = 8),
+   axis.text.y = element_text(size = 8),
+   axis.title = element_text(size = 8, face = "bold"))
+```
+
+```{r}
+# Build a weighted linear regression model for Y as a function of X
+weights = 1/(4*X^4)
+model = lm(data = hetscData, Y ~ X, weights = weights)
+summary(model)
+```
+
+

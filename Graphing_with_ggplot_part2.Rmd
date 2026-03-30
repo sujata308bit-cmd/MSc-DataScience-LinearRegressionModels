@@ -1,0 +1,112 @@
+---
+title: "Graphing Using ggplot Part-2"
+output: html_notebook
+editor_options: 
+  chunk_output_type: inline
+---
+
+```{r}
+library(ggplot2)
+```
+
+```{r}
+# Load the mpg dataset
+data('mpg')
+mpgData = mpg
+
+# Print the first five rows (or samples) in the data frame
+head(mpgData, 5)
+```
+
+```{r}
+# Plot a scatter plot of mileage w.r.t. displacement
+p1 = ggplot(data = mpgData) + 
+  geom_point(mapping = aes(x = displ, y = hwy))
+p1
+```
+
+```{r}
+# Plot a smooth lineplot of mileage w.r.t. displacement
+p2 = ggplot(data = mpgData) + 
+  geom_smooth(mapping = aes(x = displ, y = hwy))
+p2
+```
+
+```{r}
+# Plot a smooth lineplot of mileage w.r.t. displacement for each drv type
+p3 = ggplot(data = mpgData) + 
+  geom_smooth(mapping = aes(x = displ, y = hwy, linetype = drv), se = FALSE)
+p3
+
+p33 = ggplot(data = mpgData) + 
+  geom_smooth(mapping = aes(x = displ, y = hwy, linetype = factor(cyl)), se = FALSE)
+p33
+```
+
+
+```{r}
+# Specify data for layers individually
+# Plot mileage w.r.t. displacement for all cars but add a smooth
+# line only for subcompact cars by filtering
+p4 = ggplot(data = mpgData, mapping = aes(x = displ, y = hwy)) + 
+  geom_point(mapping = aes(color =factor(cyl) )) + 
+  geom_smooth(data = filter(mpgData, class == 'subcompact'), se = FALSE)
+p4
+```
+
+```{r}
+# Add a bar chart w.r.t. number of cylinders
+p5 = ggplot(data = mpgData) +
+  geom_bar(mapping = aes(x = cyl))
+p5
+```
+
+```{r}
+# Add a box plot w.r.t. number of cylinders and mileage
+# Notched box plot
+p6 = ggplot(data = mpgData) +
+    geom_boxplot(mapping = aes(x = factor(cyl), y = hwy))
+p6
+
+# # Change outlier color, shape and size
+p66 = ggplot(data = mpgData) +
+   geom_boxplot(aes(x = factor(cyl), y = hwy), outlier.colour="red", outlier.shape=8,
+                 outlier.size=4)
+ p66
+```
+
+
+```{r}
+# Simulate a data set and store in a data frame
+df = data.frame(
+  gender = factor(rep(c("F", "M"), each = 200)),
+  height = round(c(rnorm(200, mean = 60, sd = 10), rnorm(200, mean = 70, sd = 6)))
+  )
+head(df, 5)
+tail(df, 5)
+str(df)
+```
+
+```{r}
+# Plot a basic histogram
+ggplot(df, aes(x = height)) +
+  geom_histogram()
+
+ggplot(data = df) +
+  geom_histogram(mapping = aes(x = height))
+# # Change the width of bins
+ggplot(df, aes(x = height)) + 
+  geom_histogram(binwidth = 5 )
+# 
+# # Change colors
+ ggplot(df, aes(x = height)) + 
+   geom_histogram(color = 'blue', fill='red')
+
+# Change histogram plot line colors by gender
+ggplot(df, aes(x = height, color = gender)) +
+  geom_histogram(fill = 'white')
+# 
+# # Overlay histograms for both genderss
+ ggplot(df, aes(x = height, color = gender)) +
+   geom_histogram(fill = 'white', alpha = 0.3, position ='identity')
+```

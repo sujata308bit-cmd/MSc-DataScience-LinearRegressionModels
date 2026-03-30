@@ -1,0 +1,86 @@
+---
+title: "Linear Regression Models, Segment 5, Topic 3: Regularization Approaches Using glmnet
+editor_options:
+  chunk_output_type: console
+output: html_notebook
+---
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(lars)
+library(glmnet)
+library(reshape)
+```
+
+```{r}
+# Load diabetes data
+data('diabetes', package = 'lars')
+str(diabetes)
+colnames(diabetes)
+# slot x has the scaled predictor values corresponding to 10 baseline variables, age, sex, body mass index, average blood pressure, and six blood serum measurements n = 442 diabetes patients,
+# slot y is the response variable, a quantitative measure of disease progression one year after baseline 
+X = diabetes$x
+y = diabetes$y
+class(X) = NULL
+```
+
+```{r}
+# Boxplot excluding the ID column
+ggplot(data = melt(X), aes(x = factor(X2), y = value)) +
+  geom_boxplot()
+```
+
+```{r}
+# Build a linear regression model using all predictors
+model = lm(y ~ X)
+summary(model)
+```
+
+```{r}
+# Lasso regression using glmnet
+# Set lambda sequence
+lambdas = 10^seq(-2, 1.5, 0.1)
+lasso.fit = glmnet(X, y, lambda = lambdas)
+# Print the summary of the glmnet path
+print(lasso.fit)
+# Visualize the path of the coefficients
+plot(lasso.fit, label = TRUE)
+# Obtain model coefficients for specific lambda
+coef(lasso.fit, s = lambdas[length(lambdas)])
+# Predict for new patient
+predict(lasso.fit, newx = X[1, ], s = c(1))
+```
+
+```{r}
+# Compare coefficient estimates with and without lasso regularization
+cbind(coef(model), coef(lasso.fit, s = c(10, 1, 0.1, 0)))
+```
+
+```{r}
+# Use cross validation in glmnet to choose optimal
+# regularization strength lambda
+set.seed(-1)
+lasso.cv = cv.glmnet(X, y, lambda = lambdas, nfolds = 5)
+lasso.cv$lambda.min
+plot(lasso.cv)
+```
+
+```{r}
+# Ridge regression using glmnet
+# Set lambda sequence
+lambdas = 10^seq(-2, 1.5, 0.1)
+ridge.fit = glmnet(X, y, lambda = lambdas, alpha = 0)
+# Visualize the path of the coefficients
+plot(ridge.fit, label = TRUE)
+```
+
+```{r}
+# Elastic-net regression using glmnet
+# Set lambda sequence
+lambdas = 10^seq(-2, 1.5, 0.1)
+# 20% lasso and 80% ridge regularization
+elastic.fit = glmnet(X, y, lambda = lambdas, alpha = 0.2)
+# Visualize the path of the coefficients
+plot(elastic.fit, label = TRUE)
+```

@@ -1,0 +1,72 @@
+---
+title: "The tidyr Library for Data Transformation"
+output: html_notebook
+editor_options: 
+  chunk_output_type: inline
+---
+
+```{r}
+library(tidyverse)
+```
+
+```{r}
+table1 
+```
+
+```{r}
+table2
+```
+
+```{r}
+table3
+```
+
+```{r}
+table4a
+```
+
+```{r}
+#table1 %>% mutate(rate = (cases / population)*10000)
+#table1 %>% count(year, wt = cases)
+ggplot(data = table1 %>% mutate(rate = (cases / population)*10000), aes(x = year, y = rate)) +
+  geom_line(aes(group = country), color = 'gray')+
+  geom_point(aes(color = country))
+```
+
+```{r}
+# Select year, country and population, and
+# turn the long dataframe into a wide one
+table1 %>% select(c(year,country,population)) %>% spread(key = country, value = population)
+```
+```{r}
+# Select year, country and cases, and
+# turn the long dataframe into a wide one
+table1 %>% mutate(rate = (cases/population)*10000) %>%  select(c(year,country,rate)) %>% spread(key = country, value = rate)
+```
+
+
+
+```{r}
+# Create a wide dataframe
+table1.wide = table1 %>% filter(!is.na(cases)) %>% mutate(rate = (cases/population)*10000) %>%  select(c(year,country,rate)) %>% spread(key = country, value = rate)
+head(table1.wide)
+```
+
+```{r}
+# Convert wide dataframe to a long one
+head(table1.wide)
+table1.wide %>% gather(key = 'country' , value = 'rate' , -year)
+```
+
+```{r}
+# Importing data 
+file = '/Users/s0k04ng/Downloads/mtcars.csv'
+carData = read.csv(file, header = TRUE, row.names = 1, stringsAsFactors = FALSE)
+head(carData)
+```
+
+```{r}
+# Exporting data
+#write_csv(stockData.wide, file = 'stock.csv')
+write_csv(table1.wide, file = 'table1wide.csv')
+```

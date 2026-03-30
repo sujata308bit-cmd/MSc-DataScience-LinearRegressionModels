@@ -1,0 +1,100 @@
+---
+title: "Linear Regression Models, Segment 4, Topic 3: Bias and Variance"
+editor_options:
+  chunk_output_type: console
+output: html_notebook
+---
+
+```{r}
+library(ggplot2)
+library(dplyr)
+```
+
+```{r}
+# Generate the predictors
+nsamples = 1000
+x_1 = rnorm(nsamples, mean = 0, sd = 1)
+x_2 = rnorm(nsamples, mean = 0, sd = 1)
+```
+
+```{r}
+# Function to calculate the true f(x) in the population model
+f = function(x_1, x_2){
+  return(1+x_1+2*x_2)
+}
+```
+
+
+```{r}
+# Function to generate population data
+genData = function(){
+  epsilon = rnorm(nsamples, mean = 0, sd = 5)
+  y = f(x_1, x_2) + epsilon
+  popData = data.frame(x_1, x_2, y)
+  colnames(popData) = c('X_1', 'X_2', 'Y')
+  return(popData)
+  }
+```
+
+```{r}
+# Function to calculate and return the error from models built from simulating the population data several times
+calcError = function(model, popData){
+  # Calculate mean-squared-error
+  return(mean((f(popData$X_1, popData$X_2) - predict(model, popData))^2))
+}
+```
+
+```{r}
+# Build the model using several versions of the population data and calculate the prediction error
+nsimulations = 500
+error = matrix(, nrow = nsimulations, ncol = 3)
+for (j in c(1:nsimulations)){
+  # Generate population data
+  popData = genData()
+  
+  # Build using training data the model Y ~ X_1
+  model1 = lm(data = popData, Y ~ X_1)
+  
+  # Build using training data the model Y ~ X_1 + X_2
+  model2 = lm(data = popData, Y ~ X_1 + X_2)
+  
+  # Build using training data the model
+  # Y ~ X_1 + X_2 + I(X_1^2) + I(X_2^2) +...+ I(X_1^4)+I(X_2^4)
+  model3 = lm(data = popData, Y ~ X_1 + X_2 + I(X_1^2) +   I(X_2^2)+ I(X_1^3) + I(X_2^3) + I(X_1^4) + I(X_2^4))
+  
+  # Calculate MSE of models
+  error[j, 1] = calcError(model1, popData)
+  error[j, 2] = calcError(model2, popData)
+  error[j, 3] = calcError(model3, popData)
+}
+```
+
+```{r}
+# Make a histogram of the errors
+dfError = as.data.frame(error)
+colnames(dfError) = c('Error1', 'Error2', 'Error3')
+mu1 = mean(dfError$Error1)
+sigma1 = sd(dfError$Error1)
+mu2 = mean(dfError$Error2)
+sigma2 = sd(dfError$Error2)
+mu3 = mean(dfError$Error3)
+sigma3 = sd(dfError$Error3)
+delta = 0.1 # bin width for histogram
+ggplot(data = dfError) +
+  geom_histogram(aes(x = Error1, y = ..density..),
+  breaks = seq(mu1-4*sigma1, mu1+4*sigma1, by = delta),
+  colour = 'black', fill = 'steelblue', alpha = 0.4) +
+  geom_histogram(aes(x = Error2, y = ..density..),
+  breaks = seq(mu2-4*sigma2, mu2+4*sigma2, by = delta),
+  colour = 'black', fill = 'pink', alpha = 0.4) +
+  geom_histogram(aes(x = Error3, y = ..density..),
+  breaks = seq(mu3-4*sigma3, mu3+4*sigma3, by = delta),
+  colour = 'black', fill = 'green', alpha = 0.4) +
+  labs(x = 'MSE', y = 'Density')+
+  ggtitle('Histogram of RMSE Values') +
+   theme(axis.text = element_text(size = 12),
+   axis.text.x = element_text(size = 12),
+   axis.text.y = element_text(size = 12),
+   axis.title = element_text(size = 14, face = "bold"))
+
+```
